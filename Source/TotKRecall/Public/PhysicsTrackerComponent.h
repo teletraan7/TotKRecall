@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FSStack.h"
 #include "Components/ActorComponent.h"
 #include "PhysicsTrackerComponent.generated.h"
 
