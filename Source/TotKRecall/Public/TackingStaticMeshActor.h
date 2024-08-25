@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "InteractInterface.h"
 #include "GameFramework/Actor.h"
 #include "Components/StaticMeshComponent.h"
 #include "PhysicsTrackerComponent.h"
 #include "TackingStaticMeshActor.generated.h"
 
 UCLASS(config = Game)
-class ATackingStaticMeshActor : public AActor
+class ATackingStaticMeshActor : public AActor, public IInteractInterface
 {
 	GENERATED_BODY()
 	
@@ -34,4 +35,5 @@ private:
 	UFUNCTION() //Must make ufunction to work with binding later.
 	void OnPhysicsStateSleep(UPrimitiveComponent* ChangedComponent, FName name);
 	UPhysicsTrackerComponent* mPhysicsTracker;
+	virtual void Interact() override;
 };

@@ -10,6 +10,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "InteractInterface.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -137,5 +138,21 @@ void ATotKRecallCharacter::Rewind(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Purple, FString("Rewind button pressed"));
+
+		FVector Start = GetFollowCamera()->GetComponentLocation();
+		FVector End = Start + GetFollowCamera()->GetComponentRotation().Vector() * 800.0f;
+
+		FHitResult HitResult;
+		FCollisionQueryParams Params;
+		Params.AddIgnoredActor(this);
+
+		if(GetWorld()->LineTraceSingleByChannel(HitResult, Start, End, ECC_Visibility, Params))
+		{
+			if (IInteractInterface* InteractInterface = Cast<IInteractInterface>(HitResult.GetActor()))
+			{
+				InteractInterface->Interact();
+			}
+		}
+		DrawDebugLine(GetWorld(), Start, End, FColor::Cyan, false, 5.0f, 0, 2.0f);
 	}
 }

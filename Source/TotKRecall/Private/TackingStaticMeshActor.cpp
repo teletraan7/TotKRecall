@@ -35,6 +35,12 @@ void ATackingStaticMeshActor::OnPhysicsStateSleep(UPrimitiveComponent* ChangedCo
 	mPhysicsTracker->RequestTrackerEnd();
 }
 
+void ATackingStaticMeshActor::Interact()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, FString("Interacting with the box"));
+	mPhysicsTracker->Rewind();
+}
+
 void ATackingStaticMeshActor::OnActorHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
 {
 	//mPhysicsTracker->RequestTrackerStart();

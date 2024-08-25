@@ -30,16 +30,35 @@ void UPhysicsTrackerComponent::RequestTrackerEnd()
 	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Tracker Ended"));
 }
 
+//Need to modify so it lerps between the points smoothly over a duration. Right now it just appears to jump because it executes so fast.
+void UPhysicsTrackerComponent::Rewind()
+{
+	IsRewinding = true;
+	while (mTransformPoints.Num() > 0)
+	{
+		FTrackingPoint point = mTransformPoints.Pop();
+		GetOwner()->SetActorLocation(point.Transform, true);
+		GetOwner()->SetActorRotation(point.Rotation);
+	}
+	IsRewinding = false;
+}
+
 void UPhysicsTrackerComponent::StartTracker()
 {
-	mTrackingPhysics = true;
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString("Tracker Started"));
+	if (!IsRewinding)
+	{
+		mTrackingPhysics = true;
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString("Tracker Started"));
+	}
 }
 
 void UPhysicsTrackerComponent::EndTracker()
 {
-	mTrackingPhysics = false;
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Tracker Ended"));
+	if (!IsRewinding)
+	{
+		mTrackingPhysics = false;
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Tracker Ended"));
+	}
 }
 
 
@@ -60,8 +79,10 @@ void UPhysicsTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 
 	if (mTrackingPhysics)
 	{
-		FVector test = GetOwner()->GetActorLocation();
-		mTransformPoints.Push(test);
+		FTrackingPoint point;
+		point.Transform = GetOwner()->GetActorLocation();
+		point.Rotation = GetOwner()->GetActorRotation();
+		mTransformPoints.Push(point);
 		if (mTransformPoints.Num() >= 400)
 		{
 			mTransformPoints.RemoveAt(0);
@@ -69,7 +90,7 @@ void UPhysicsTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	}
 	for (auto point : mTransformPoints)
 	{
-		DrawDebugPoint(GetWorld(), point, 10, FColor::Green, false, 0.1f, 1);
+		DrawDebugPoint(GetWorld(), point.Transform, 10, FColor::Green, false, 0.1f, 1);
 	}
 }
 

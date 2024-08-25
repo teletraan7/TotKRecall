@@ -6,6 +6,15 @@
 #include "Components/ActorComponent.h"
 #include "PhysicsTrackerComponent.generated.h"
 
+USTRUCT()
+struct FTrackingPoint
+{
+	GENERATED_BODY()
+
+	FVector Transform;
+	FRotator Rotation;
+};
+
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
 class UPhysicsTrackerComponent : public UActorComponent
 {
@@ -16,6 +25,7 @@ public:
 	UPhysicsTrackerComponent();
 	void RequestTrackerStart();
 	void RequestTrackerEnd();
+	void Rewind();
 
 protected:
 	// Called when the game starts
@@ -24,11 +34,9 @@ protected:
 private:	
 	// Called every frame
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
-	/*TUniquePtr<FSStack> mPhysicsStack;
-	FSStack mTransformStack;
-	uint16_t mPhysicsPoint {40};*/
-	TArray<FVector> mTransformPoints;
+	TArray<FTrackingPoint> mTransformPoints;
 	bool mTrackingPhysics {false};
+	bool IsRewinding { false };
 	void StartTracker();
 	void EndTracker();
 };
