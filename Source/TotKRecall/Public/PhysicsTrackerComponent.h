@@ -6,10 +6,13 @@
 #include "Components/ActorComponent.h"
 #include "PhysicsTrackerComponent.generated.h"
 
-USTRUCT()
+USTRUCT(Blueprintable)
 struct FTrackingPoint
 {
 	GENERATED_BODY()
+
+	FTrackingPoint() {}
+	FTrackingPoint(FVector transform, FRotator rotation) : Transform(transform), Rotation(rotation) {}
 
 	FVector Transform;
 	FRotator Rotation;
@@ -37,6 +40,8 @@ private:
 	TArray<FTrackingPoint> mTransformPoints;
 	bool mTrackingPhysics {false};
 	bool IsRewinding { false };
+	FTrackingPoint TargetStep;
 	void StartTracker();
 	void EndTracker();
+	void GetRewindStep(FVector actorPos, FRotator actorRot, float deltaTime);
 };

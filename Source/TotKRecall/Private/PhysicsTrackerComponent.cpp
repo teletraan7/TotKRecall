@@ -14,37 +14,6 @@ UPhysicsTrackerComponent::UPhysicsTrackerComponent()
 
 void UPhysicsTrackerComponent::RequestTrackerStart()
 {
-	/*if (!mTrackingPhysics)
-		StartTracker();*/
-	mTrackingPhysics = true;
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, FString("Tracker Started"));
-}
-
-void UPhysicsTrackerComponent::RequestTrackerEnd()
-{
-	/*if (mTrackingPhysics)
-	{
-		EndTracker();
-	}*/
-	mTrackingPhysics = false;
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Tracker Ended"));
-}
-
-//Need to modify so it lerps between the points smoothly over a duration. Right now it just appears to jump because it executes so fast.
-void UPhysicsTrackerComponent::Rewind()
-{
-	IsRewinding = true;
-	while (mTransformPoints.Num() > 0)
-	{
-		FTrackingPoint point = mTransformPoints.Pop();
-		GetOwner()->SetActorLocation(point.Transform, true);
-		GetOwner()->SetActorRotation(point.Rotation);
-	}
-	IsRewinding = false;
-}
-
-void UPhysicsTrackerComponent::StartTracker()
-{
 	if (!IsRewinding)
 	{
 		mTrackingPhysics = true;
@@ -52,12 +21,45 @@ void UPhysicsTrackerComponent::StartTracker()
 	}
 }
 
-void UPhysicsTrackerComponent::EndTracker()
+void UPhysicsTrackerComponent::RequestTrackerEnd()
 {
 	if (!IsRewinding)
 	{
 		mTrackingPhysics = false;
 		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Blue, FString("Tracker Ended"));
+	}
+}
+
+//Need to modify so it lerps between the points smoothly over a duration. Right now it just appears to jump because it executes so fast.
+void UPhysicsTrackerComponent::Rewind()
+{
+	IsRewinding = true;
+	TargetStep = mTransformPoints.Pop();
+}
+
+void UPhysicsTrackerComponent::GetRewindStep(FVector actorPos, FRotator actorRot, float deltaTime)
+{
+	//get distance between current position and target
+	FVector sum = actorPos - TargetStep.Transform;
+	float distance = sum.Length();
+	//if distance is below threshold then pop next target step
+	if (distance <= 0.01f)
+	{
+		GetOwner()->SetActorLocation(TargetStep.Transform);
+		GetOwner()->SetActorRotation(TargetStep.Rotation);
+		if (mTransformPoints.Num() == 0)
+		{
+			IsRewinding = false;
+			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Magenta, FString("Lerp finished"));
+		}
+		else
+		{
+			TargetStep = mTransformPoints.Pop();
+		}
+	}
+	else
+	{
+		GetOwner()->SetActorLocation(FMath::Lerp(actorPos, TargetStep.Transform, deltaTime * 10.0f));
 	}
 }
 
@@ -77,16 +79,18 @@ void UPhysicsTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (mTrackingPhysics)
+	if (mTrackingPhysics && !IsRewinding)
 	{
-		FTrackingPoint point;
-		point.Transform = GetOwner()->GetActorLocation();
-		point.Rotation = GetOwner()->GetActorRotation();
+		FTrackingPoint point { GetOwner()->GetActorLocation() , GetOwner()->GetActorRotation() };
 		mTransformPoints.Push(point);
-		if (mTransformPoints.Num() >= 400)
+		if (mTransformPoints.Num() > 400)
 		{
 			mTransformPoints.RemoveAt(0);
 		}
+	}
+	if (IsRewinding)
+	{
+		GetRewindStep(GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation(), DeltaTime);
 	}
 	for (auto point : mTransformPoints)
 	{
