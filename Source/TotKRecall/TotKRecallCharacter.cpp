@@ -153,6 +153,6 @@ void ATotKRecallCharacter::Rewind(const FInputActionValue& Value)
 				InteractInterface->Interact();
 			}
 		}
-		DrawDebugLine(GetWorld(), Start, End, FColor::Cyan, false, 5.0f, 0, 2.0f);
+		DrawDebugLine(GetWorld(), Start, End, FColor::Cyan, false, 1.0f, 0, 2.0f);
 	}
 }

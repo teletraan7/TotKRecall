@@ -41,6 +41,7 @@ private:
 	bool mTrackingPhysics {false};
 	bool IsRewinding { false };
 	FTrackingPoint TargetStep;
+	float LerpProgress;
 	void StartTracker();
 	void EndTracker();
 	void GetRewindStep(FVector actorPos, FRotator actorRot, float deltaTime);

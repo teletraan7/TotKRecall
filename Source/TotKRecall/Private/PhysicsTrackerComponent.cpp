@@ -2,6 +2,8 @@
 
 #include "PhysicsTrackerComponent.h"
 
+#include <string>
+
 // Sets default values for this component's properties
 UPhysicsTrackerComponent::UPhysicsTrackerComponent()
 {
@@ -10,6 +12,8 @@ UPhysicsTrackerComponent::UPhysicsTrackerComponent()
 	PrimaryComponentTick.bCanEverTick = true;
 
 	mTransformPoints.Reserve(400);
+	
+	LerpProgress = 0;
 }
 
 void UPhysicsTrackerComponent::RequestTrackerStart()
@@ -35,18 +39,22 @@ void UPhysicsTrackerComponent::Rewind()
 {
 	IsRewinding = true;
 	TargetStep = mTransformPoints.Pop();
+	//TargetStep = mTransformPoints[0];
 }
 
 void UPhysicsTrackerComponent::GetRewindStep(FVector actorPos, FRotator actorRot, float deltaTime)
 {
 	//get distance between current position and target
-	FVector sum = actorPos - TargetStep.Transform;
-	float distance = sum.Length();
+	//FVector sum = actorPos - TargetStep.Transform;
+	//float distance = sum.Length();
 	//if distance is below threshold then pop next target step
-	if (distance <= 0.01f)
+	GetOwner()->SetActorLocation(FMath::Lerp(actorPos, TargetStep.Transform, LerpProgress));
+	GetOwner()->SetActorRotation(FMath::Lerp(actorRot, TargetStep.Rotation, LerpProgress));
+	if (LerpProgress >= 1)
 	{
-		GetOwner()->SetActorLocation(TargetStep.Transform);
-		GetOwner()->SetActorRotation(TargetStep.Rotation);
+		//GetOwner()->SetActorLocation(TargetStep.Transform);
+		//GetOwner()->SetActorRotation(TargetStep.Rotation);
+		LerpProgress = 0;
 		if (mTransformPoints.Num() == 0)
 		{
 			IsRewinding = false;
@@ -56,10 +64,6 @@ void UPhysicsTrackerComponent::GetRewindStep(FVector actorPos, FRotator actorRot
 		{
 			TargetStep = mTransformPoints.Pop();
 		}
-	}
-	else
-	{
-		GetOwner()->SetActorLocation(FMath::Lerp(actorPos, TargetStep.Transform, deltaTime * 10.0f));
 	}
 }
 
@@ -90,11 +94,22 @@ void UPhysicsTrackerComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
 	}
 	if (IsRewinding)
 	{
+		/*for (auto point : mTransformPoints)
+		{
+			DrawDebugPoint(GetWorld(), point.Transform, 10, FColor::Green, false, 0.1f, 1);
+		}*/
+		if (LerpProgress < 1)
+		{
+			LerpProgress += DeltaTime * 50;
+		}
+		if (LerpProgress >= 1)
+		{
+			LerpProgress = 1;
+		}
 		GetRewindStep(GetOwner()->GetActorLocation(), GetOwner()->GetActorRotation(), DeltaTime);
+		FString lerpString = FString::SanitizeFloat(LerpProgress);
+		GEngine->AddOnScreenDebugMessage(-2, 1.0f, FColor::Magenta, *lerpString);
 	}
-	for (auto point : mTransformPoints)
-	{
-		DrawDebugPoint(GetWorld(), point.Transform, 10, FColor::Green, false, 0.1f, 1);
-	}
+	
 }
 
